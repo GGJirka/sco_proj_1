@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "443878249416",
+    "project_id": "sco-proj-1",
+    "storage_bucket": "sco-proj-1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:443878249416:android:d24216aae0a5c10e7666fd",
+        "android_client_info": {
+          "package_name": "com.example.sco_proj_1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBbK-TvmYT_o1Ro0jakBlVxZTCBrR-UFyA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
