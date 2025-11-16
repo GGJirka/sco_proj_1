@@ -18,16 +18,14 @@ class ApiService {
 
   static const String fakeApiKey = 'FAKE-API-KEY-REV-123456';
   static const String hardcodedFeatureFlag = 'premium_dashboard_enabled';
-  static const String hardcodedConfigEndpoint =
-      'https://api.research.example/config';
+  static const String hardcodedConfigEndpoint = 'https://api.research.example/config';
 
   static const List<String> _pinnedSpkiHashes = <String>[
     // Placeholder SPKI hash for demonstration only.
     'AbCdEfGhIjKlMnOpQrStUvWxYz0123456789abcdefghi=',
   ];
 
-  final StreamController<Map<String, dynamic>?> _configController =
-      StreamController<Map<String, dynamic>?>.broadcast();
+  final StreamController<Map<String, dynamic>?> _configController = StreamController<Map<String, dynamic>?>.broadcast();
 
   Stream<Map<String, dynamic>?> get configStream => _configController.stream;
 
@@ -43,6 +41,7 @@ class ApiService {
 
   Future<Map<String, dynamic>?> fetchRemoteConfig() async {
     final uri = Uri.parse(hardcodedConfigEndpoint);
+
     if (isHardened) {
       final valid = await _validatePinnedCertificate(uri);
       if (!valid) {
@@ -63,7 +62,7 @@ class ApiService {
     if (isHardened) {
       final token = await FirebaseAppCheck.instance.getToken(false);
       if (token != null) {
-        headers['X-Firebase-AppCheck'] = token.token;
+        headers['X-Firebase-AppCheck'] = token;
       }
     }
 
@@ -80,22 +79,27 @@ class ApiService {
 
   Future<bool> _validatePinnedCertificate(Uri uri) async {
     final port = uri.hasPort ? uri.port : 443;
-    final socket = await SecureSocket.connect(uri.host, port,
-        timeout: const Duration(seconds: 5));
+    final socket = await SecureSocket.connect(uri.host, port, timeout: const Duration(seconds: 5));
     final certificate = socket.peerCertificate;
     await socket.close();
+
     if (certificate == null) {
       return false;
     }
+
     final spkiHash = _calculateSpkiHash(certificate.pem);
     return _pinnedSpkiHashes.contains(spkiHash);
   }
 
   String _calculateSpkiHash(String pem) {
-    final cert = x509.X509CertificateData.fromPem(pem);
-    final spki = cert.subjectPublicKeyInfo.subjectPublicKey;
-    final bytes = spki.valueAsBytes();
-    final digest = sha256.convert(bytes);
+    final parsed = x509.parsePem(pem);
+    final cert = parsed.firstWhere((e) => e is x509.X509Certificate) as x509.X509Certificate;
+
+    final spki = cert.tbsCertificate.subjectPublicKeyInfo!;
+    final spkiAsn1 = spki.toAsn1();
+    final spkiBytes = spkiAsn1.encodedBytes;
+
+    final digest = sha256.convert(spkiBytes);
     return base64Encode(digest.bytes);
   }
 

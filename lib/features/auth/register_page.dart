@@ -25,7 +25,7 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   void initState() {
     super.initState();
-    _firebaseService = serviceLocator<FirebaseService>();
+    _firebaseService = get<FirebaseService>();
   }
 
   Future<void> _register() async {
@@ -34,10 +34,7 @@ class _RegisterPageState extends State<RegisterPage> {
       _errorMessage = null;
     });
     try {
-      await _firebaseService.register(
-        _emailController.text.trim(),
-        _passwordController.text,
-      );
+      await _firebaseService.register(_emailController.text.trim(), _passwordController.text);
       if (!mounted) return;
       Navigator.pop(context);
     } on FirebaseAuthException catch (error) {
@@ -67,10 +64,7 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title:
-            Text('Register (${widget.isHardened ? 'hardened' : 'baseline'})'),
-      ),
+      appBar: AppBar(title: Text('Register (${widget.isHardened ? 'hardened' : 'baseline'})')),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -88,18 +82,12 @@ class _RegisterPageState extends State<RegisterPage> {
             ),
             if (_errorMessage != null) ...[
               const SizedBox(height: 12),
-              Text(
-                _errorMessage!,
-                style: const TextStyle(color: Colors.red),
-              ),
+              Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
             ],
             const SizedBox(height: 20),
             _isLoading
                 ? const CircularProgressIndicator()
-                : ElevatedButton(
-                    onPressed: _register,
-                    child: const Text('Register'),
-                  ),
+                : ElevatedButton(onPressed: _register, child: const Text('Register')),
           ],
         ),
       ),

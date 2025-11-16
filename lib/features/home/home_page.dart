@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../services/api_service.dart';
@@ -35,10 +34,10 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    _firebaseService = serviceLocator<FirebaseService>();
-    _storageService = serviceLocator<StorageService>();
-    _apiService = serviceLocator<ApiService>();
-    _securityService = serviceLocator<SecurityService>();
+    _firebaseService = get<FirebaseService>();
+    _storageService = get<StorageService>();
+    _apiService = get<ApiService>();
+    _securityService = get<SecurityService>();
     _securityService.refresh();
     _loadStoredValues();
   }
@@ -83,9 +82,7 @@ class _HomePageState extends State<HomePage> {
       await _apiService.fetchRemoteConfig();
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Config fetch failed: $error')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Config fetch failed: $error')));
     }
   }
 
@@ -93,9 +90,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     final user = _firebaseService.currentUser;
     if (user == null) {
-      return const Scaffold(
-        body: Center(child: Text('No authenticated user')),
-      );
+      return const Scaffold(body: Center(child: Text('No authenticated user')));
     }
 
     return Scaffold(
@@ -152,10 +147,7 @@ class _HomePageState extends State<HomePage> {
                     },
                   ),
                   const SizedBox(height: 8),
-                  ElevatedButton(
-                    onPressed: _refreshConfig,
-                    child: const Text('Refresh remote config'),
-                  ),
+                  ElevatedButton(onPressed: _refreshConfig, child: const Text('Refresh remote config')),
                   const SizedBox(height: 16),
                   if (compromised)
                     const Text(
@@ -166,19 +158,12 @@ class _HomePageState extends State<HomePage> {
                     ElevatedButton(
                       onPressed: _loadingPremium ? null : _fetchPremiumReport,
                       child: _loadingPremium
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
+                          ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
                           : const Text('Premium report'),
                     ),
                   if (_premiumError != null) ...[
                     const SizedBox(height: 8),
-                    Text(
-                      _premiumError!,
-                      style: const TextStyle(color: Colors.red),
-                    ),
+                    Text(_premiumError!, style: const TextStyle(color: Colors.red)),
                   ],
                   if (_premiumReport != null && !compromised) ...[
                     const SizedBox(height: 8),

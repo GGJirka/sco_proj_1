@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart';
+// import 'package:cloud_functions/cloud_functions.dart'; // <- už není potřeba
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -16,12 +16,7 @@ class FirebaseService {
 
   Future<void> initialize() async {
     if (isHardened) {
-      await FirebaseAppCheck.instance.activate(
-        androidProvider: AndroidProvider.playIntegrity,
-      );
-      await FirebaseFunctions.instance.setHttpsCallableOptions(
-        HttpsCallableOptions(timeout: const Duration(seconds: 10)),
-      );
+      await FirebaseAppCheck.instance.activate(androidProvider: AndroidProvider.playIntegrity);
     } else {
       // Baseline intentionally leaves App Check disabled for research demos.
     }
@@ -36,10 +31,7 @@ class FirebaseService {
   }
 
   Future<UserCredential> register(String email, String password) async {
-    final credential = await _auth.createUserWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
+    final credential = await _auth.createUserWithEmailAndPassword(email: email, password: password);
     final user = credential.user;
     if (user != null) {
       await _firestore.collection('users').doc(user.uid).set({
@@ -58,27 +50,28 @@ class FirebaseService {
 
   Future<Map<String, dynamic>> fetchPremiumReport() async {
     final projectId = Firebase.app().options.projectId;
-    final uri = Uri.parse(
-      'https://us-central1-$projectId.cloudfunctions.net/getPremiumReport',
-    );
-    final headers = <String, String>{
-      'X-Debug': 'enabled',
-    };
+    final uri = Uri.parse('https://us-central1-$projectId.cloudfunctions.net/getPremiumReport');
+
+    final headers = <String, String>{'X-Debug': 'enabled'};
+
     final user = _auth.currentUser;
     final idToken = await user?.getIdToken();
     if (idToken != null) {
       headers['Authorization'] = 'Bearer $idToken';
     }
+
     if (isHardened) {
       final token = await FirebaseAppCheck.instance.getToken(false);
       if (token != null) {
-        headers['X-Firebase-AppCheck'] = token.token;
+        headers['X-Firebase-AppCheck'] = token;
       }
     }
+
     final response = await http.post(uri, headers: headers);
     if (response.statusCode != 200) {
       throw Exception('Premium report error: ${response.statusCode}');
     }
+
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
 }

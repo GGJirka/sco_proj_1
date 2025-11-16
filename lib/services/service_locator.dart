@@ -7,36 +7,28 @@ import 'firebase_service.dart';
 import 'security_service.dart';
 import 'storage_service.dart';
 
-final GetIt serviceLocator = GetIt.instance;
+final get = GetIt.instance;
 
 Future<void> setupLocator({required bool hardened}) async {
-  if (serviceLocator.isRegistered<FirebaseService>()) {
-    await serviceLocator.reset();
+  if (get.isRegistered<FirebaseService>()) {
+    await get.reset();
   }
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  final storageService = hardened
-      ? SecureStorageService()
-      : InsecureStorageService();
+  final storageService = hardened ? SecureStorageService() : InsecureStorageService();
   await storageService.init();
-  serviceLocator.registerSingleton<StorageService>(storageService);
 
-  final securityService = hardened
-      ? HardenedSecurityService()
-      : BaselineSecurityService();
-  serviceLocator.registerSingleton<SecurityService>(securityService);
+  get.registerSingleton<StorageService>(storageService);
+
+  final securityService = hardened ? HardenedSecurityService() : BaselineSecurityService();
+  get.registerSingleton<SecurityService>(securityService);
 
   final firebaseService = FirebaseService(isHardened: hardened);
   await firebaseService.initialize();
-  serviceLocator.registerSingleton<FirebaseService>(firebaseService);
+  get.registerSingleton<FirebaseService>(firebaseService);
 
-  final apiService = ApiService(
-    isHardened: hardened,
-    storageService: storageService,
-  );
+  final apiService = ApiService(isHardened: hardened, storageService: storageService);
   await apiService.initialize();
-  serviceLocator.registerSingleton<ApiService>(apiService);
+  get.registerSingleton<ApiService>(apiService);
 }

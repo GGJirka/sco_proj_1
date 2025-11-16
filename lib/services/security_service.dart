@@ -5,6 +5,7 @@ import 'package:flutter_jailbreak_detection/flutter_jailbreak_detection.dart';
 abstract class SecurityService {
   Stream<bool> get integrityStream;
   Future<void> refresh();
+  void dispose();
 }
 
 class BaselineSecurityService implements SecurityService {
@@ -12,8 +13,7 @@ class BaselineSecurityService implements SecurityService {
     _controller.add(false);
   }
 
-  final StreamController<bool> _controller =
-      StreamController<bool>.broadcast();
+  final StreamController<bool> _controller = StreamController<bool>.broadcast();
 
   @override
   Stream<bool> get integrityStream => _controller.stream;
@@ -22,35 +22,39 @@ class BaselineSecurityService implements SecurityService {
   Future<void> refresh() async {
     _controller.add(false);
   }
+
+  @override
+  void dispose() {
+    _controller.close();
+  }
 }
 
 class HardenedSecurityService implements SecurityService {
   HardenedSecurityService() {
-    refresh();
+    unawaited(refresh());
   }
 
-  final StreamController<bool> _controller =
-      StreamController<bool>.broadcast();
+  final StreamController<bool> _controller = StreamController<bool>.broadcast();
 
   @override
   Stream<bool> get integrityStream => _controller.stream;
 
   @override
   Future<void> refresh() async {
-    final jailbroken = await FlutterJailbreakDetection.jailbroken;
-    final developerMode = await FlutterJailbreakDetection.developerMode;
-    final suBinary = await FlutterJailbreakDetection.checkForBinary('su');
-    final busyboxBinary =
-        await FlutterJailbreakDetection.checkForBinary('busybox');
-    var systemWritable = false;
     try {
-      systemWritable =
-          await FlutterJailbreakDetection.canCreateTestFileInSystemDirectories;
+      final jailbroken = await FlutterJailbreakDetection.jailbroken;
+      final developerMode = await FlutterJailbreakDetection.developerMode;
+
+      final compromised = jailbroken || developerMode;
+
+      _controller.add(compromised);
     } catch (_) {
-      systemWritable = false;
+      _controller.add(true);
     }
-    final compromised =
-        jailbroken || developerMode || suBinary || busyboxBinary || systemWritable;
-    _controller.add(compromised);
+  }
+
+  @override
+  void dispose() {
+    _controller.close();
   }
 }

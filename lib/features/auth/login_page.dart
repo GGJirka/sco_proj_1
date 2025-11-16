@@ -29,9 +29,9 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void initState() {
     super.initState();
-    _firebaseService = serviceLocator<FirebaseService>();
-    _storageService = serviceLocator<StorageService>();
-    _apiService = serviceLocator<ApiService>();
+    _firebaseService = get<FirebaseService>();
+    _storageService = get<StorageService>();
+    _apiService = get<ApiService>();
     _loadLastEmail();
   }
 
@@ -48,26 +48,17 @@ class _LoginPageState extends State<LoginPage> {
       _errorMessage = null;
     });
     try {
-      final credential = await _firebaseService.signIn(
-        _emailController.text.trim(),
-        _passwordController.text,
-      );
+      final credential = await _firebaseService.signIn(_emailController.text.trim(), _passwordController.text);
       await _persistSessionData(credential);
       if (!mounted) return;
       Navigator.pushReplacementNamed(context, '/home');
     } on FirebaseAuthException catch (error) {
-      setState(() {
-        _errorMessage = error.message ?? 'Authentication failed';
-      });
+      setState(() => _errorMessage = error.message ?? 'Authentication failed');
     } catch (error) {
-      setState(() {
-        _errorMessage = error.toString();
-      });
+      setState(() => _errorMessage = error.toString());
     } finally {
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
       }
     }
   }
@@ -78,6 +69,11 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
     final token = await user.getIdToken();
+
+    if (token == null) {
+      return;
+    }
+
     await _storageService.saveIdToken(token);
     await _storageService.saveLastLoginEmail(user.email ?? 'unknown@example.com');
     await _storageService.saveLocalSecret('localSecret-demo-${user.uid}');
@@ -93,9 +89,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Login (${widget.isHardened ? 'hardened' : 'baseline'})'),
-      ),
+      appBar: AppBar(title: Text('Login (${widget.isHardened ? 'hardened' : 'baseline'})')),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -112,24 +106,15 @@ class _LoginPageState extends State<LoginPage> {
               obscureText: true,
             ),
             const SizedBox(height: 12),
-            Text(
-              'Feature flag: ${_apiService.featureFlag}',
-              style: const TextStyle(fontStyle: FontStyle.italic),
-            ),
+            Text('Feature flag: ${_apiService.featureFlag}', style: const TextStyle(fontStyle: FontStyle.italic)),
             if (_errorMessage != null) ...[
               const SizedBox(height: 12),
-              Text(
-                _errorMessage!,
-                style: const TextStyle(color: Colors.red),
-              ),
+              Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
             ],
             const SizedBox(height: 20),
             _isLoading
                 ? const CircularProgressIndicator()
-                : ElevatedButton(
-                    onPressed: _signIn,
-                    child: const Text('Sign in'),
-                  ),
+                : ElevatedButton(onPressed: _signIn, child: const Text('Sign in')),
             TextButton(
               onPressed: () {
                 Navigator.pushNamed(context, '/register');

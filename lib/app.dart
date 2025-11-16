@@ -23,17 +23,14 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-    _firebaseService = serviceLocator<FirebaseService>();
+    _firebaseService = get<FirebaseService>();
   }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Rev Research (${widget.buildFlavor})',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
+      theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple), useMaterial3: true),
       routes: {
         '/login': (_) => LoginPage(isHardened: widget.isHardened),
         '/register': (_) => RegisterPage(isHardened: widget.isHardened),
@@ -43,9 +40,7 @@ class _MyAppState extends State<MyApp> {
         stream: _firebaseService.authStateChanges,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Scaffold(
-              body: Center(child: CircularProgressIndicator()),
-            );
+            return const Scaffold(body: Center(child: CircularProgressIndicator()));
           }
           if (snapshot.hasData && snapshot.data != null) {
             return HomePage(isHardened: widget.isHardened);
