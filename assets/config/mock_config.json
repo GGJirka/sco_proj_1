@@ -1,0 +1,6 @@
+{
+  "configVersion": 1,
+  "note": "Local asset config used before hitting network",
+  "maintenanceWindow": "sunday-02:00",
+  "featureFlag": "premium_dashboard_enabled"
+}
