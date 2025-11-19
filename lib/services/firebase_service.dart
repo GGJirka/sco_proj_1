@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 // import 'package:cloud_functions/cloud_functions.dart'; // <- už není potřeba
@@ -6,6 +7,21 @@ import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:http/http.dart' as http;
+import 'package:http/io_client.dart';
+
+http.Client createHttpClient({required bool isHardened}) {
+  if (isHardened) {
+    // Hardened: default Client → normální cert verify + případné pinning
+    return http.Client();
+  }
+
+  final HttpClient ioClient = HttpClient()
+    ..badCertificateCallback = (X509Certificate cert, String host, int port) {
+      return true; // akceptuj jakýkoliv cert
+    };
+
+  return IOClient(ioClient);
+}
 
 class FirebaseService {
   FirebaseService({required this.isHardened});
@@ -67,7 +83,7 @@ class FirebaseService {
       }
     }
 
-    final response = await http.post(uri, headers: headers);
+    final response = await createHttpClient(isHardened: isHardened).post(uri, headers: headers);
     if (response.statusCode != 200) {
       throw Exception('Premium report error: ${response.statusCode}');
     }
